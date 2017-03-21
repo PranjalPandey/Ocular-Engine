@@ -1,0 +1,50 @@
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    >
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="wrap_content"
+    android:layout_height="wrap_content" tools:context="pranjal.com.ocular1301.Language"
+    >
+
+    <android.support.v7.widget.CardView
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/card_view"
+    android:layout_gravity="center"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/card_height"
+    card_view:cardCornerRadius="@dimen/card_corner_radius"
+    card_view:cardBackgroundColor="@android:color/white"
+    card_view:contentPadding="@dimen/card_content_padding"
+    >
+
+    <EditText
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/translation_field_padding_left"
+    android:paddingTop="@dimen/translation_field_padding_top"
+    android:paddingBottom="@dimen/translation_field_padding_bottom"
+    android:paddingRight="@dimen/translation_field_padding_right"
+    android:textSize="@dimen/translation_field_text_size"
+    android:inputType="textCapSentences|textMultiLine"
+    android:gravity="top|start"
+    android:ems="5"
+    android:id="@+id/textTranslate"
+    android:hint="@string/enter_text"
+    android:background="@android:color/transparent" />
+
+    </android.support.v7.widget.CardView>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/translate_button_height"
+        android:text="@string/translate_button"
+        android:id="@+id/translButton"
+        android:layout_below="@id/card_view"
+        android:textColor="@color/colorAccent" />
+
+</RelativeLayout>
+
+</ScrollView>

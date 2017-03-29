@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--This is the main frame layout in which I set hight, background and align it to the bottom-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/toolbar_bottom"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    android:visibility="invisible"
+    android:layout_alignParentBottom="true"
+    android:layout_gravity="bottom"
+    android:background="@color/colorPrimaryDark"
+    android:elevation="4dp">
+
+
+    <!--This linear layout is a wrapper for all the button which are added.-->
+    <!--It should be horizontal and change weightsum to the number of buttons you want to add-->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:weightSum="4">
+
+        <!--All these are just wrapper for image view and text view that will act as button-->
+        <!--They have a vertical layout, center gravity and clickable true-->
+        <!--They also have layout weight as 1 to divide space equally amongst buttons-->
+        <!--Also enable haptic feedback if you want to create touch vibration on click-->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:id="@+id/translate"
+            android:clickable="true"
+            android:gravity="center"
+            android:hapticFeedbackEnabled="true"
+            android:background="@drawable/button_background"
+            android:orientation="vertical">
+
+            <!-- A text view pointing to  drawable-->
+            <!--make sure to make clickable false-->
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:clickable="false"
+                android:src="@drawable/translate_icon"
+                />
+
+            <!--A txt view to add text below the image-->
+            <!--Align it to the center and change size as you find fit-->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Translate"
+                android:textSize="12sp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:id="@+id/speak"
+            android:clickable="true"
+            android:gravity="center"
+            android:hapticFeedbackEnabled="true"
+            android:background="@drawable/button_background"
+            android:orientation="vertical">
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:clickable="false"
+                android:src="@drawable/speaker"
+                />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Speaker"
+                android:textSize="12sp"/>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:id="@+id/search"
+            android:background="@drawable/button_background"
+            android:gravity="center"
+            android:hapticFeedbackEnabled="true"
+            android:orientation="vertical">
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:clickable="false"
+                android:src="@drawable/search"
+                />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Search"
+                android:textSize="12sp"/>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:id="@+id/pdf"
+            android:background="@drawable/button_background"
+            android:gravity="center"
+            android:hapticFeedbackEnabled="true"
+            android:orientation="vertical">
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:clickable="false"
+                android:src="@drawable/pdf"
+                />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="PDF"
+                android:textSize="12sp"/>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

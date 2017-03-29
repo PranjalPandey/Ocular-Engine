@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#18A6B1</color>
-    <color name="colorPrimaryDark">#18A6A0</color>
-    <color name="colorAccent">#E40046</color>
+    <color name="colorPrimary">#4e77a0</color>
+    <color name="colorPrimaryDark">#3a5977</color>
+    <color name="colorAccent">#f27f13</color>
     <color name="HeadColor">#41f4e5</color>
     <color name="dropdown_text_color">#ff333333</color>
     <color name="toolbar_background">#E40046</color>

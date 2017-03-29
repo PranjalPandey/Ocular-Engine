@@ -323,8 +323,8 @@ public final class OcrCaptureActivity extends AppCompatActivity {
         if (graphic != null) {
 
             Vibrator v = (Vibrator)getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
-            // Vibrate for 500 milliseconds
-            v.vibrate(500);
+            // Vibrate for 200 milliseconds
+            v.vibrate(200);
             text = graphic.getTextBlock();
             if (text != null && text.getValue() != null) {
                 Intent data = new Intent();

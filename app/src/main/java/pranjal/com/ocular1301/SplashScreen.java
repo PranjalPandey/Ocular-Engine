@@ -101,7 +101,32 @@ checkPermission();
             if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)
                     == PackageManager.PERMISSION_GRANTED) {
                 Log.v(TAG, "Permission is granted");
-                StartAnimations();               return true;
+                splashTread = new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            int waited = 0;
+                            // Splash screen pause time
+                            while (waited < 2000) {
+                                sleep(100);
+                                waited += 100;
+                            }
+                            Intent intent = new Intent(SplashScreen.this,
+                                    MainActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+                            startActivity(intent);
+
+                            SplashScreen.this.finish();
+                        } catch (InterruptedException e) {
+                            // do nothing
+                        } finally {
+                            SplashScreen.this.finish();
+                        }
+
+                    }
+                };
+                splashTread.start();
+                return true;
             } else {
 
                 Log.v(TAG, "Permission is revoked");
@@ -110,7 +135,32 @@ checkPermission();
             }
         } else { //permission is automatically granted on sdk<23 upon installation
             Log.v(TAG, "Permission is granted");
-            StartAnimations();
+            splashTread = new Thread() {
+                @Override
+                public void run() {
+                    try {
+                        int waited = 0;
+                        // Splash screen pause time
+                        while (waited < 2000) {
+                            sleep(100);
+                            waited += 100;
+                        }
+                        Intent intent = new Intent(SplashScreen.this,
+                                MainActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+                        startActivity(intent);
+
+                        SplashScreen.this.finish();
+                    } catch (InterruptedException e) {
+                        // do nothing
+                    } finally {
+                        SplashScreen.this.finish();
+                    }
+
+                }
+            };
+            splashTread.start();
+
             return true;
         }
     }
@@ -120,7 +170,31 @@ checkPermission();
         if(requestCode==REQUEST_PERMISSIONS){
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(getApplicationContext(),"Permissions Granted!",Toast.LENGTH_SHORT).show();
-                StartAnimations();//   createPDF();
+                splashTread = new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            int waited = 0;
+                            // Splash screen pause time
+                            while (waited < 2000) {
+                                sleep(100);
+                                waited += 100;
+                            }
+                            Intent intent = new Intent(SplashScreen.this,
+                                    MainActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+                            startActivity(intent);
+
+                            SplashScreen.this.finish();
+                        } catch (InterruptedException e) {
+                            // do nothing
+                        } finally {
+                            SplashScreen.this.finish();
+                        }
+
+                    }
+                };
+                splashTread.start();
             }
             else {
                 Toast.makeText(getApplicationContext(), "Permission Denied!", Toast.LENGTH_SHORT).show();

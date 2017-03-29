@@ -61,12 +61,12 @@ FloatingActionButton fab;
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_barcode_camera);
-        setupWindowAnimations();
         android.support.v7.app.ActionBar actionBar = getSupportActionBar();
         actionBar.setHomeButtonEnabled(true);
         actionBar.setTitle("Barcode Scan");
         actionBar.setDisplayHomeAsUpEnabled(true);
-
+        actionBar.setIcon(R.drawable.refresh);
+actionBar.show();
         statusMessage = (TextView) findViewById(R.id.status_message);
         barcodeValue = (TextView) findViewById(R.id.barcode_value);
 ivImage=(ImageView)findViewById(R.id.ivImage);
@@ -81,13 +81,6 @@ gallery.setOnClickListener(new View.OnClickListener() {
         galleryIntent();
     }
 });
-        refresh.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                finish();
-                startActivity(new Intent(getApplicationContext(),BarcodeCameraActivity.class));
-            }
-        });
 
     fab=(FloatingActionButton) findViewById(R.id.floatingActionButton);
     fab.setOnClickListener(new View.OnClickListener() {
@@ -105,18 +98,7 @@ Toast.makeText(getApplicationContext(),"Searching...",Toast.LENGTH_SHORT).show()
         }
     });
     }
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private void setupWindowAnimations() {
 
-        Slide slide = new Slide();
-        slide.setDuration(1000);
-        getWindow().setExitTransition(slide);
-    }
-    /**
-     * Called when a view has been clicked.
-     *
-     * @param v The view that was clicked.
-     */
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.read_barcode) {

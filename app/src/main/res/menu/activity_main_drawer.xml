@@ -21,13 +21,13 @@
     <item android:title="Tips">
         <menu>
             <item
-                android:id="@+id/nav_share"
-                android:icon="@drawable/ic_menu_share"
-                android:title="Share" />
+                android:id="@+id/tips"
+                android:title="Tips"
+                android:icon="@android:drawable/ic_menu_help"/>
             <item
-                android:id="@+id/nav_send"
+                android:id="@+id/feedback"
                 android:icon="@drawable/ic_menu_send"
-                android:title="Send" />
+                android:title="Send Feedback" />
         </menu>
     </item>
 

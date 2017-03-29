@@ -3,6 +3,7 @@ package pranjal.com.ocular1301;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -15,6 +16,7 @@ import android.graphics.pdf.PdfDocument;
 
 import android.media.AudioManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;;
@@ -29,10 +31,13 @@ import android.speech.tts.TextToSpeech;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 import android.transition.Slide;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Gravity;
+import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -47,6 +52,9 @@ import android.view.animation.Animation;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -83,68 +91,31 @@ import static android.R.attr.defaultWidth;
 import static android.R.attr.numberPickerStyle;
 import static android.R.attr.windowMinWidthMajor;
 
-public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener,View.OnClickListener,TextToSpeech.OnInitListener,RecognitionListener {
-    private static final int POLL_INTERVAL = 300;
-    private boolean mRunning = false;
+public class MainActivity extends ActionBarActivity
+        implements NavigationView.OnNavigationItemSelectedListener,View.OnClickListener,TextToSpeech.OnInitListener,SpeechRecognizerManager.OnResultListener{
     private static File destination;
-    private int mThreshold;
-    private PowerManager.WakeLock mWakeLock;
-    private Handler mHandler = new Handler();
-    private SoundLevelView mDisplay;
-    private SoundMeter mSensor;
+Context mContext;
+    FrameLayout bottom_toolbar;
+    Button refresh;
 Uri uri;
-    private Uri uri_image;
     private CompoundButton autoFocus;
     private CompoundButton useFlash;
     private TextView statusMessage;
     private TextView textValue;
     TextToSpeech TTS;
     String text;
-    Button refresh;
     private final int REQUEST_PDF = 1;
-    private final int REQ_CODE_SPEECH_INPUT = 100;
     private static final int RC_OCR_CAPTURE = 9003;
     private static final String TAG = "MainActivity";
-    private SpeechRecognizer speech = null;
-    private Intent recognizerIntent;
-    View popupView;PopupWindow popupWindow;
     private static final int PHOTO_REQUEST = 10;
     private Uri imageUri;
     private TextRecognizer detector;
     private static final int REQUEST_WRITE_PERMISSION = 20;
     private static final String SAVED_INSTANCE_URI = "uri";
     private static final String SAVED_INSTANCE_RESULT = "result";
+    private SpeechRecognizerManager mSpeechRecognizerManager;
+LinearLayout translate,speak,pdf,search;
 
-
-    /****************** Define runnable thread again and again detect noise *********/
-
-    private Runnable mSleepTask = new Runnable() {
-        public void run() {
-            //Log.i("Noise", "runnable mSleepTask");
-            start();
-        }
-    };
-
-    // Create runnable thread to Monitor Voice
-    private Runnable mPollTask = new Runnable() {
-        public void run() {
-
-            double amp = mSensor.getAmplitude();
-            //Log.i("Noise", "runnable mPollTask");
-            updateDisplay("Monitoring Voice...", amp);
-
-            if ((amp > mThreshold)) {
-                callForHelp();
-                //Log.i("Noise", "==== onCreate ===");
-
-            }
-
-            // Runnable(mPollTask) will again execute after POLL_INTERVAL
-            mHandler.postDelayed(mPollTask, POLL_INTERVAL);
-
-        }
-    };
 
 
 
@@ -157,56 +128,64 @@ Uri uri;
         detector = new TextRecognizer.Builder(getApplicationContext()).build();
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        bottom_toolbar=(FrameLayout)findViewById(R.id.toolbar_bottom);
+bottom_toolbar.setVisibility(View.INVISIBLE);
         TTS = new TextToSpeech(this, this);
         textValue = (TextView) findViewById(R.id.text_value);
-
-        mDisplay = (SoundLevelView) findViewById(R.id.volume);
-
-        final FoldingTabBar tabBar = (FoldingTabBar) findViewById(R.id.folding_tab_bar);
-        tabBar.setOnFoldingItemClickListener(new FoldingTabBar.OnFoldingItemSelectedListener() {
+        refresh=(Button)findViewById(R.id.refresh);
+        refresh.setOnClickListener(new View.OnClickListener() {
             @Override
-            public boolean onFoldingItemSelected(@NotNull MenuItem item) {
-                int id = item.getItemId();
-
-                //noinspection SimplifiableIfStatement
-                if (id == R.id.search) {
-                    try {
-                        Intent intent = new Intent(Intent.ACTION_WEB_SEARCH);
-                        String term = textValue.getText().toString();
-                        intent.putExtra(SearchManager.QUERY, term);
-                        startActivity(intent);
-                    } catch (Exception e) {
-                        // TODO: handle exception
-                    }
-
-                    Toast.makeText(getApplicationContext(), "Search", Toast.LENGTH_SHORT).show();
-
-                    return true;
-                }
-                if (id == R.id.speak) {
-
-                    String text = textValue.getText().toString();
-                    TTS.speak(text, TextToSpeech.QUEUE_FLUSH, null);
-                    Toast.makeText(getApplicationContext(), "Speaking", Toast.LENGTH_SHORT).show();
-
-                    return true;
-                }
-                if (id == R.id.translate) {
-                    Toast.makeText(getApplicationContext(), "Loading translator", Toast.LENGTH_SHORT).show();
-                    Intent i = new Intent(getApplicationContext(), Start.class);
-                    String text = textValue.getText().toString().replace("\n", " ").replace("\r", " ");
-                    i.putExtra("myString", text);
-                    startActivity(i);
-                    return true;
-                }
-                if (id == R.id.pdf) {
-                  createPDF();
-                    return true;
-                }
-                return false;
+            public void onClick(View view) {
+                finish();
+                startActivity(new Intent(getApplicationContext(),MainActivity.class));
             }
         });
+        translate=(LinearLayout)findViewById(R.id.translate);
+        translate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(getApplicationContext(), "Loading translator", Toast.LENGTH_SHORT).show();
+                Intent i = new Intent(getApplicationContext(), Start.class);
+                String text = textValue.getText().toString().replace("\n", " ").replace("\r", " ");
+                i.putExtra("myString", text);
+                startActivity(i);
 
+            }
+        });
+        speak=(LinearLayout)findViewById(R.id.speak);
+    speak.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            String text = textValue.getText().toString();
+            TTS.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+            Toast.makeText(getApplicationContext(), "Speaking", Toast.LENGTH_SHORT).show();
+        }
+    });
+        search=(LinearLayout)findViewById(R.id.search);
+        search.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_WEB_SEARCH);
+                    String term = textValue.getText().toString();
+                    intent.putExtra(SearchManager.QUERY, term);
+                    startActivity(intent);
+                } catch (Exception e) {
+                    // TODO: handle exception
+                }
+
+                Toast.makeText(getApplicationContext(), "Search", Toast.LENGTH_SHORT).show();
+
+            }
+        });
+        pdf=(LinearLayout)findViewById(R.id.pdf);
+        pdf.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                createPDF();
+
+            }
+        });
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -223,21 +202,6 @@ Uri uri;
 
         findViewById(R.id.read_text).setOnClickListener(this);
 
-        refresh = (Button) findViewById(R.id.refresh);
-        refresh.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-               stop();
-                finish();
-                startActivity(new Intent(getApplicationContext(), MainActivity.class));
-
-            }
-        });
-
-        mSensor = new SoundMeter();
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        mWakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "NoiseAlert");
-
         ElasticButton gallery=(ElasticButton)findViewById(R.id.show_gallery);
         gallery.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -249,90 +213,15 @@ Uri uri;
             }
         });
 
+        mSpeechRecognizerManager =new SpeechRecognizerManager(this);
+        mSpeechRecognizerManager.setOnResultListner(this);
     }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        //Log.i("Noise", "==== onResume ===");
-
-        initializeApplicationConstants();
-        mDisplay.setLevel(0, mThreshold);
-
-        if (!mRunning) {
-            mRunning = true;
-            start();
-        }
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        // Log.i("Noise", "==== onStop ===");
-
-        //Stop noise monitoring
-        stop();
-
-    }
-
-    private void start() {
-        //Log.i("Noise", "==== start ===");
-
-        mSensor.start();
-        if (!mWakeLock.isHeld()) {
-            mWakeLock.acquire();
-        }
-
-        //Noise monitoring start
-        // Runnable(mPollTask) will execute after POLL_INTERVAL
-
-        mHandler.postDelayed(mPollTask, POLL_INTERVAL);
-    }
-
-    private void stop() {
-        Log.i("Noise", "==== Stop Noise Monitoring===");
-        if (mWakeLock.isHeld()) {
-            mWakeLock.release();
-        }
-        mHandler.removeCallbacks(mSleepTask);
-        mHandler.removeCallbacks(mPollTask);
-        mSensor.stop();
-        mDisplay.setLevel(0,0);
-        updateDisplay("stopped...", 0.0);
-        mRunning = false;
-
-    }
-
-
-    private void initializeApplicationConstants() {
-        // Set Noise Threshold
-        mThreshold = 11;
-
-    }
-
-    private void updateDisplay(String status, double signalEMA) {
-        //
-        mDisplay.setLevel((int)signalEMA, mThreshold);
-    }
-
-
-    private void callForHelp() {
- // Show alert when noise thersold crossed
-        Toast.makeText(getApplicationContext(), "Listening...",
-                Toast.LENGTH_SHORT).show();
-        stop();
-
-        detectSpeech();
-
-    }
-
-
-
 
     boolean doubleBackToExitPressedOnce = false;
 
     @Override
     public void onBackPressed() {
+        bottom_toolbar.setVisibility(View.INVISIBLE);
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
@@ -372,6 +261,23 @@ Uri uri;
             startActivity(i);
 
         } else if (id == R.id.Dashboard) {
+            final ProgressDialog pDialog = ProgressDialog.show(MainActivity.this,"Loading", "Please wait..",true);
+            new Thread() {
+                public void run() {
+                    try{
+                        int waited = 0;
+                        // Splash screen pause time
+                        while (waited < 2000) {
+                            sleep(100);
+                            waited += 100;
+                        }
+                        startActivity(new Intent(MainActivity.this,DashboardActivity.class));
+
+                    } catch (InterruptedException e) {
+                        // do nothing
+                    }
+                    pDialog.dismiss();  }
+            }.start();
 
         }
 
@@ -383,7 +289,34 @@ Uri uri;
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.read_text) {
-openPopup();
+//openPopup();
+
+
+            final CharSequence[] items = {"Mobile Vision", "Take Picture"};
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Choose Action");
+            builder.setItems(items, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int item) {
+                    // Do something with the selection
+                  switch(item){
+                      case 0:                // launch Ocr capture activity.
+                          Intent intent = new Intent(getApplicationContext(), OcrCaptureActivity.class);
+                          intent.putExtra(OcrCaptureActivity.AutoFocus, autoFocus.isChecked());
+                          intent.putExtra(OcrCaptureActivity.UseFlash, useFlash.isChecked());
+                          startActivityForResult(intent, RC_OCR_CAPTURE);
+break;
+                      case 1:
+                          takePicture();
+                          break;
+
+                  }
+                }
+            });
+            AlertDialog alert = builder.create();
+            alert.show();
+
+
         }
 
     }
@@ -396,9 +329,11 @@ openPopup();
                     text = data.getStringExtra(OcrCaptureActivity.TextBlockObject);
                     statusMessage.setText(R.string.ocr_success);
                     textValue.setText(text);
+bottom_toolbar.setVisibility(View.VISIBLE);
                     Log.d(TAG, "Text read: " + text);
                 } else {
                     statusMessage.setText(R.string.ocr_failure);
+                    TTS.speak("No Text Captured.",TextToSpeech.QUEUE_FLUSH,null);
                     Log.d(TAG, "No Text captured, intent data is null");
                 }
             } else {
@@ -443,6 +378,8 @@ openPopup();
                                   statusMessage.setText(R.string.ocr_failure);
                               } else {
                                   textValue.setText(textValue.getText() + lines + "\n");
+                                  statusMessage.setText(R.string.ocr_success);
+                                  bottom_toolbar.setVisibility(View.VISIBLE);
                               }
                           } else {
                               statusMessage.setText(R.string.ocr_error);
@@ -481,6 +418,8 @@ openPopup();
                             statusMessage.setText(R.string.ocr_failure);
                         } else {
                             textValue.setText(textValue.getText() + lines + "\n");
+                            statusMessage.setText(R.string.ocr_success);
+                            bottom_toolbar.setVisibility(View.VISIBLE);
                         }
                     } else {
                         statusMessage.setText(R.string.ocr_error);
@@ -579,153 +518,6 @@ openPopup();
 
     }
 
-    //SharingDocument
-    private void shareDocument() {
-        Uri uri;
-        // crate a page description
-        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(1200, 2000, numberPickerStyle).create();
-        // create a new page from the PageInfo
-        PdfDocument.Page page = document.startPage(pageInfo);
-
-
-        // repaint the user's text into the page
-        View content = findViewById(R.id.text_value);
-        content.draw(page.getCanvas());
-
-        // do final processing of the page
-        document.finishPage(page);
-
-        try {
-            File pdfDirPath = new File(Environment.getExternalStorageDirectory() + "/Ocular/");
-            if (!pdfDirPath.exists()) {
-                pdfDirPath.mkdir();
-            }
-            String name = dateToString(new Date(), "yyyy-MM-dd-hh-mm-ss");
-            File file = new File(pdfDirPath, name + ".pdf");
-            os = new FileOutputStream(file);
-            uri = Uri.fromFile(file);
-            document.writeTo(os);
-            document.close();
-            os.close();
-        } catch (IOException e) {
-            throw new RuntimeException("Error generating file", e);
-        }
-
-
-        mShareIntent = new Intent();
-        mShareIntent.setAction(Intent.ACTION_SEND);
-        mShareIntent.setType("application/pdf");
-        // Assuming it may go via eMail:
-        mShareIntent.putExtra(Intent.EXTRA_SUBJECT, "Here is a PDF from Ocular");
-        // Attach the PDf as a Uri, since Android can't take it as bytes yet.
-        mShareIntent.putExtra(Intent.EXTRA_STREAM, uri);
-        startActivity(Intent.createChooser(mShareIntent, "Share using"));
-        return;
-    }
-
-
-    @Override
-    public void onReadyForSpeech(Bundle bundle) {
-
-    }
-
-    @Override
-    public void onBeginningOfSpeech() {
-
-    }
-
-    @Override
-    public void onRmsChanged(float v) {
-
-    }
-
-    @Override
-    public void onBufferReceived(byte[] bytes) {
-
-    }
-
-    @Override
-    public void onEndOfSpeech() {
-
-    }
-
-    @Override
-    public void onError(int i) {
-
-    }
-
-    @Override
-    public void onResults(Bundle bundle) {
-        ArrayList<String> matches = bundle
-                .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-        String text = "";
-        for (String result : matches)
-            text += result + "\n";
-        String mostLikelyThingHeard = matches.get(0);
-        if(mostLikelyThingHeard.toUpperCase().equals("DETECT TEXT")){
-            // launch Ocr capture activity.
-            Intent intent = new Intent(getApplicationContext(), OcrCaptureActivity.class);
-            intent.putExtra(OcrCaptureActivity.AutoFocus, autoFocus.isChecked());
-            intent.putExtra(OcrCaptureActivity.UseFlash, useFlash.isChecked());
-            TTS.speak("TAP ON THE SCREEN TO EXTRACT TEXT FROM IMAGE", TextToSpeech.QUEUE_FLUSH, null);
-TTS.setSpeechRate(1);
-            startActivityForResult(intent, RC_OCR_CAPTURE);
-
-        } else if(mostLikelyThingHeard.toUpperCase().equals("SPEAK")) {
-
-            TTS.speak(textValue.getText().toString(), TextToSpeech.QUEUE_FLUSH, null);
-
-        }else if(mostLikelyThingHeard.toUpperCase().equals("TRANSLATE")){
-            Intent i = new Intent(getApplicationContext(), Start.class);
-            String translate_text = textValue.getText().toString().replace("\n", " ").replace("\r", " ");
-            i.putExtra("myString", translate_text);
-            startActivity(i);
-        }else if(mostLikelyThingHeard.toUpperCase().equals("REFRESH")){
-            stop();
-            finish();
-             TTS.speak("REFRESHED!", TextToSpeech.QUEUE_FLUSH, null);
-
-            startActivity(new Intent(getApplicationContext(), MainActivity.class));
-        }else if(mostLikelyThingHeard.toUpperCase().equals("DETECT BARCODE")){
-            startActivity(new Intent(getApplicationContext(), BarcodeCameraActivity.class));
-        }else if(mostLikelyThingHeard.toUpperCase().equals("EXIT")){
-
-            finish();
-
-        }else{
-            TTS.speak("Speak Again!", TextToSpeech.QUEUE_FLUSH, null);
-       start(); }
-    }
-
-    @Override
-    public void onPartialResults(Bundle bundle) {
-
-    }
-
-    @Override
-    public void onEvent(int i, Bundle bundle) {
-
-    }
-
-public void detectSpeech(){
-    //Speech Recognition
-
-    speech = SpeechRecognizer.createSpeechRecognizer(this);
-    speech.setRecognitionListener(this);
-    recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-    recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE,
-            "en");
-    recognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,
-            this.getPackageName());
-    recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-            RecognizerIntent.LANGUAGE_MODEL_WEB_SEARCH);
-    recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
-    speech.startListening(recognizerIntent);
-
-    SystemClock.sleep(1000);
-    speech.stopListening();
-
-}
 
     private void takePicture() {
         // Use a folder to store all results
@@ -777,39 +569,9 @@ public void detectSpeech(){
                 .openInputStream(uri), null, bmOptions);
     }
 
-    public void openPopup(){
-        LayoutInflater layoutInflater
-                = (LayoutInflater)getBaseContext().getSystemService(LAYOUT_INFLATER_SERVICE);
-        popupView = layoutInflater.inflate(R.layout.popup_action, null);
-        popupWindow = new PopupWindow(popupView, 500,400);
-
-        Button popup_Camera = (Button)popupView.findViewById(R.id.CameraButton);
-        popup_Camera.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {takePicture();
-                popupWindow.dismiss();
-            }
-        });
-        popupWindow.setFocusable(true);
-        popupWindow.showAtLocation(popupView, Gravity.CENTER, 0, 0);
 
 
-        Button popup_Mobile_Vision = (Button)popupView.findViewById(R.id.MobileVisionButton);
-        popup_Mobile_Vision.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // launch Ocr capture activity.
-                Intent intent = new Intent(getApplicationContext(), OcrCaptureActivity.class);
-                intent.putExtra(OcrCaptureActivity.AutoFocus, autoFocus.isChecked());
-                intent.putExtra(OcrCaptureActivity.UseFlash, useFlash.isChecked());
-                startActivityForResult(intent, RC_OCR_CAPTURE);
 
-                popupWindow.dismiss();
-            }
-        });
-
-
-    }
     //Crop image
     public void ImageCropFunction() {
 
@@ -843,4 +605,58 @@ public void detectSpeech(){
         }
     }
 
-}
+    @Override
+    public void OnResult(ArrayList<String> commands) {
+        for(String command:commands)
+        {
+            if (command.equals("detect text")){
+
+                Intent intent = new Intent(getApplicationContext(), OcrCaptureActivity.class);
+                intent.putExtra(OcrCaptureActivity.AutoFocus, autoFocus.isChecked());
+                intent.putExtra(OcrCaptureActivity.UseFlash, useFlash.isChecked());
+                TTS.speak("Tap on the screen to extract the text shown on camera.", TextToSpeech.QUEUE_FLUSH, null);
+                startActivityForResult(intent, RC_OCR_CAPTURE);
+
+                return;
+            }
+
+            if (command.equals("speak")){
+
+                String text = textValue.getText().toString();
+                TTS.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+                return;
+            }
+
+            if (command.equals("translate")){
+
+                Intent i = new Intent(getApplicationContext(), Start.class);
+                TTS.speak("Opening Translator.", TextToSpeech.QUEUE_FLUSH, null);
+                String text = textValue.getText().toString().replace("\n", " ").replace("\r", " ");
+                i.putExtra("myString", text);
+                startActivity(i);
+                return;
+            }
+            if (command.equals("barcode")){
+
+                Intent i = new Intent(getApplicationContext(), BarcodeCameraActivity.class);
+             TTS.speak("Barcode Activity Opened.",TextToSpeech.QUEUE_FLUSH,null);
+                startActivity(i);
+
+                  return;
+            }
+            if (command.equals("Dashboard")) {
+
+                Intent i = new Intent(getApplicationContext(), DashboardActivity.class);
+                TTS.speak("Dashboard Activity.", TextToSpeech.QUEUE_FLUSH, null);
+                startActivity(i);
+
+                return;
+            }else{
+                TTS.speak("Invalid Command!",TextToSpeech.QUEUE_FLUSH,null);
+                return;
+            }
+        }
+
+        }
+
+    }
